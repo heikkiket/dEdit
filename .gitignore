@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/editor2
+editor2.so
+editor2.dylib
+editor2.dll
+editor2.a
+editor2.lib
+editor2-test-*
+*.exe
+*.o
+*.obj
+*.lst
