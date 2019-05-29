@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"Heikki Ketoharju"
+	],
+	"copyright": "Copyright © 2019, Heikki Ketoharju",
+	"description": "a small text editor",
+	"license": "GPL",
+	"name": "editor2"
+}
