@@ -222,10 +222,12 @@ void drawRows() {
 
     if(y < editor.getLineAmount()) {
       string str = editor.getLine(filerow);
-      int length = configuration.screencols - configuration.coloff;
-      if(str.length > length) {
-        str = str[configuration.coloff..length];
+      ulong length = str.length - configuration.coloff;
+      if(length > configuration.screencols) {
+        length = configuration.screencols;
       }
+      if(length < 0) length = 0;
+      // str = str[configuration.coloff..length];
       printchars(str);
     } else {
       printchars("~");
