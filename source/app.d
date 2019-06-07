@@ -1,4 +1,4 @@
-import std.stdio : readf, write, writeln, writefln;
+import std.stdio : write, writeln, writefln;
 import std.ascii;
 import std.format;
 import std.conv;
@@ -19,15 +19,17 @@ struct EditorConfig {
   int screenrows;
   int screencols;
   int cx, cy;
+  int rowoff;
+  int coloff;
   string screenbuffer;
 }
 
 EditorConfig configuration;
+TextEditor editor;
 
 const short CONTROL_QUIT = 17;
 const short CONTROL_R = 18;
 const short CONTROL_ESC = 27;
-
 const short EDITOR_QUIT = 1005;
 const short EDITOR_CONTINUE = 1006;
 const short ARROW_UP = 1000;
@@ -65,6 +67,8 @@ void initEditor() {
   configuration.screenbuffer = "";
   configuration.cx = 0;
   configuration.cy = 0;
+  configuration.rowoff = 0;
+  configuration.coloff = 0;
 }
 
 int readKeyPress(){
@@ -77,7 +81,6 @@ int readKeyPress(){
 
   if(isControl(c)) {
       int[3] res;
-    // writeln("is control. ");
 
     // The fgetc function returns -1 if no result
     res[0] = fgetc(stdin);
@@ -125,12 +128,10 @@ void moveCursor(int key) {
     }
     break;
   case ARROW_RIGHT:
-    if(configuration.cx < configuration.screencols) {
-      configuration.cx++;
-    }
+    configuration.cx++;
     break;
   case ARROW_DOWN:
-    if(configuration.cy < configuration.screenrows) {
+    if(configuration.cy < editor.getLineAmount()) {
       configuration.cy++;
     }
     break;
@@ -177,22 +178,60 @@ void clearScreen() {
 }
 
 void updatescreen() {
+  editorScroll();
+
+  //move cursor to upper corner
   write("\x1b[?25l");
 
   drawRows();
 
-  printchars(format("\x1b[%d;%dH", configuration.cy + 1, configuration.cx + 1));
+  // print cursor
+  printchars(format("\x1b[%d;%dH", (configuration.cy - configuration.rowoff) + 1,
+                    (configuration.cx - configuration.coloff) + 1));
 
   write(configuration.screenbuffer);
   configuration.screenbuffer = "";
+  // move cursor back to the upper corner
   write("\x1b[?25h");
 }
 
+void editorScroll() {
+  if(configuration.cy < configuration.rowoff) {
+    configuration.rowoff = configuration.cy;
+  }
+  if(configuration.cy >= configuration.rowoff + configuration.screenrows) {
+    configuration.rowoff = configuration.cy - configuration.screenrows + 1;
+  }
+  if(configuration.cx < configuration.coloff) {
+    configuration.coloff = configuration.cx;
+  }
+  if(configuration.cx >= configuration.coloff + configuration.screencols) {
+    configuration.coloff = configuration.cx - configuration.screencols + 1;
+  }
+}
+
 void drawRows() {
+  //position the cursor on the top of the screen
+  printchars("\x1b[H");
   int y;
   for( y = 0; y < configuration.screenrows; y++) {
-    printchars("~");
-    //empty the following row
+    int filerow = y + configuration.rowoff;
+    if(editor.getLineAmount == 1 && y == 0) {
+      printchars(centerStr("Welcome to DEdit " ~ EDITOR_VERSION));
+    }
+
+    if(y < editor.getLineAmount()) {
+      string str = editor.getLine(filerow);
+      int length = configuration.screencols - configuration.coloff;
+      if(str.length > length) {
+        str = str[configuration.coloff..length];
+      }
+      printchars(str);
+    } else {
+      printchars("~");
+    }
+
+    //empty the end of the row
     printchars("\x1b[K");
 
     if(y < configuration.screenrows - 1) {
@@ -203,18 +242,24 @@ void drawRows() {
   printchars("\x1b[H");
 }
 
-int main()
+int main(string[] args)
 {
   enterRawMode();
 	writeln(ostate);
   writeln();
   writeln(nstate);
 
+  // This editor class has text buffer stuff in it.
+  editor = new TextEditor();
+
   initEditor();
+  if(args.length > 1) {
+    writeln(args[1]);
+    editor.loadFile(args[1]);
+  }
   clearScreen();
 
   while(1) {
-    printchars(centerStr("Welcome to DEdit " ~ EDITOR_VERSION) ~ "\n");
     updatescreen();
     short status = processKeyPress();
 
@@ -225,19 +270,5 @@ int main()
 
   clearScreen();
   endRawMode();
-  return 0;
-}
-
-int main2() {
-
-  enterRawMode();
-  while(1) {
-    int i = readKeyPress();
-
-    if( i == EDITOR_QUIT) {
-      break;
-    }
-  }
-
   return 0;
 }
