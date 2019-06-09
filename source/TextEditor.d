@@ -6,6 +6,7 @@ class TextEditor {
   char[][] content;
   int cursorx;
   int cursory;
+  string filename;
 
   this() {
     content.length = 1;
@@ -13,30 +14,35 @@ class TextEditor {
     content[0] = " ".dup;
   }
 
+  void loadFile(string filename) {
+
+    auto file = File(filename);
+    this.filename = filename;
+    content.length = 0;
+    while(!file.eof()) {
+      string line = file.readln;
+      if(line.length == 0) {
+        break;
+      }
+      string line2 = line[0..$];
+
+      // Strip newlines
+      if(line[$-1] == '\n') {
+        line2 = line[0..$-1];
+      }
+      this.putLine(line2);
+    }
+
+  }
+
+  string getFilename() {
+    return filename;
+  }
+
   char getChar(int line, int col) {
     return content[line][col];
   }
 
-  void putStr(string s, int line, int col) {
-    char[] add = s.dup;
-    char[] nline;
-    nline.length = content[line].length + add.length;
-    nline = content[line][0..col] ~ add ~ content[line][col..$];
-    content[line] = nline;
-  }
-
-  void putChar(char c, int line, int col) {
-
-    if (content.length <= line) {
-      content.length = line*2;
-    }
-
-    if(content[line].length <= col) {
-      content[line].length = col * 2;
-    }
-
-    content[line][col] = c;
-  }
 
   string getLine(int line) {
     if(line < content.length) {
@@ -44,6 +50,7 @@ class TextEditor {
     }
     return "";
   }
+
 
   int getLineLength(int line) {
     if(line < content.length) {
@@ -62,23 +69,20 @@ class TextEditor {
     content[$-1] = line;
   }
 
-  void loadFile(string filename) {
+  void putStr(string s, int line, int col) {
+    char[] add = s.dup;
+    char[] nline;
+    nline.length = content[line].length + add.length;
+    nline = content[line][0..col] ~ add ~ content[line][col..$];
+    content[line] = nline;
+  }
 
-    auto file = File(filename);
-    content.length = 0;
-    while(!file.eof()) {
-      string line = file.readln;
-      if(line.length == 0) {
-        break;
-      }
-      string line2 = line[0..$];
+  void putChar(char c, int line, int col) {
 
-      // Strip newlines
-      if(line[$-1] == '\n') {
-        line2 = line[0..$-1];
-      }
-      this.putLine(line2);
+    if (content.length <= line) {
+      content.length = line+1;
     }
 
+    content[line] = content[line][0..col] ~ c ~ content[line][col..$];
   }
 }
