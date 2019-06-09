@@ -45,11 +45,25 @@ const short INSERT = 1011;
 
 const string EDITOR_VERSION = "0.1";
 
+string debugStr = "";
+const DEBUG = 1;
+
+string printDebug() {
+  if(DEBUG == 1) {
+    string ret = debugStr;
+    debugStr = "";
+    return ret;
+  }
+}
+
+void mydebug(string str) {
+  debugStr ~= str;
+}
+
 void enterRawMode() {
   tcgetattr(1, &ostate);
   tcgetattr(1, &nstate);
   // cfmakeraw(&nstate);
-  //These two flags don't work. I don't know why.
   nstate.c_iflag &= ~(IXON);
   nstate.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
   nstate.c_cc[VMIN] = 0;
@@ -65,10 +79,28 @@ void initEditor() {
   configuration.screenrows = 24;
   configuration.screencols = 80;
   configuration.screenbuffer = "";
-  configuration.cx = 0;
+  configuration.cx = 776;
   configuration.cy = 0;
   configuration.rowoff = 0;
   configuration.coloff = 0;
+}
+
+short processKeyPress() {
+  int c = readKeyPress();
+
+  switch(c) {
+  case EDITOR_QUIT:
+    return EDITOR_QUIT;
+  case ARROW_UP:
+  case ARROW_RIGHT:
+  case ARROW_DOWN:
+  case ARROW_LEFT:
+    moveCursor(c);
+    break;
+  default:
+    return EDITOR_CONTINUE;
+  }
+  return 0;
 }
 
 int readKeyPress(){
@@ -128,7 +160,9 @@ void moveCursor(int key) {
     }
     break;
   case ARROW_RIGHT:
-    configuration.cx++;
+    if(configuration.cx < editor.getLineLength(configuration.cy)){
+      configuration.cx++;
+    }
     break;
   case ARROW_DOWN:
     if(configuration.cy < editor.getLineAmount()) {
@@ -136,30 +170,13 @@ void moveCursor(int key) {
     }
     break;
   case ARROW_LEFT:
-    if(configuration.cx > 1) {
+    if(configuration.cx > 0) {
       configuration.cx--;
     }
     break;
   }
 }
 
-short processKeyPress() {
-  int c = readKeyPress();
-
-  switch(c) {
-  case EDITOR_QUIT:
-    return EDITOR_QUIT;
-  case ARROW_UP:
-  case ARROW_RIGHT:
-  case ARROW_DOWN:
-  case ARROW_LEFT:
-    moveCursor(c);
-    break;
-  default:
-    return EDITOR_CONTINUE;
-  }
-  return 0;
-}
 
 void printchars(string str) {
   configuration.screenbuffer = format("%s%s", configuration.screenbuffer, str);
@@ -207,15 +224,22 @@ void editorScroll() {
   }
   if(configuration.cx >= configuration.coloff + configuration.screencols) {
     configuration.coloff = configuration.cx - configuration.screencols + 1;
+    writeln("coloff from here: ", configuration.coloff);
   }
 }
 
 void drawRows() {
   //position the cursor on the top of the screen
   printchars("\x1b[H");
+
   int y;
+  mydebug("coloff: " ~ to!string( configuration.coloff ) ~ " ");
+  mydebug("cursorX: " ~ to!string( configuration.cx) ~
+          " cursorY: " ~ to!string(configuration.cy));
   for( y = 0; y < configuration.screenrows; y++) {
     int filerow = y + configuration.rowoff;
+
+    // if no lines, probably no file loaded so show welcome text:
     if(editor.getLineAmount == 1 && y == 0) {
       printchars(centerStr("Welcome to DEdit " ~ EDITOR_VERSION));
     }
@@ -223,14 +247,27 @@ void drawRows() {
     if(y < editor.getLineAmount()) {
       string str = editor.getLine(filerow);
       ulong length = str.length - configuration.coloff;
+
       if(length > configuration.screencols) {
         length = configuration.screencols;
       }
-      if(length < 0) length = 0;
-      // str = str[configuration.coloff..length];
-      printchars(str);
+      if(length < 0) {
+        length = 0;
+      }
+
+      if(configuration.coloff < str.length) {
+        str = str[configuration.coloff..configuration.coloff+length];
+        printchars(str);
+      }
+
+      mydebug(" [row " ~ to!string(y) ~ " length:" ~ to!string(str.length)
+              ~ " length:" ~ to!string(length) ~ "]");
+
     } else {
       printchars("~");
+      //print some debug information
+
+      printchars(printDebug());
     }
 
     //empty the end of the row
@@ -240,6 +277,8 @@ void drawRows() {
       printchars("\n");
     }
   }
+
+
   //Reposition the cursor on the top of the screen
   printchars("\x1b[H");
 }

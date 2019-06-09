@@ -39,7 +39,17 @@ class TextEditor {
   }
 
   string getLine(int line) {
-    return cast(string) content[line];
+    if(line < content.length) {
+      return cast(string) content[line];
+    }
+    return "";
+  }
+
+  int getLineLength(int line) {
+    if(line < content.length) {
+      return cast(int) content[line].length;
+    }
+    return 0;
   }
 
   ulong getLineAmount() {
