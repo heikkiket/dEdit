@@ -50,6 +50,8 @@ const short HOME = 1009;
 const short END = 1010;
 const short INSERT = 1011;
 const short ENTER = 1012;
+const short BACKSPACE = 1013;
+const short TAB = 1014;
 
 const string EDITOR_VERSION = "0.1";
 const int TAB_STOP = 8;
@@ -116,7 +118,15 @@ short processKeyPress() {
     moveCursor(c);
     break;
   case ENTER:
+    doEnter();
+    break;
+  case BACKSPACE:
+    deleteChar(-1);
+    break;
+  case DELETE:
+    // deleteChar(1);
     return EDITOR_CONTINUE;
+    break;
   case EDITOR_CONTINUE:
     return EDITOR_CONTINUE;
   default:
@@ -133,46 +143,51 @@ int readKeyPress(){
     return EDITOR_CONTINUE;
   }
 
+
   if(isControl(c)) {
       int[3] res;
 
-    // The fgetc function returns -1 if no result
-    res[0] = fgetc(stdin);
-    res[1] = fgetc(stdin);
-    // Debug:
-    // writefln("%d %d %d", c, res[0], res[1]);
+      // The fgetc function returns -1 if no result
+      res[0] = c;
+      res[1] = fgetc(stdin);
+      res[2] = fgetc(stdin);
+      // Debug:
+      // writefln("%d %d %d",  res[0], res[1], res[2]);
 
-    if(cast(short) c == CONTROL_QUIT) {
-      writeln("bye!");
-      return EDITOR_QUIT;
+      if(cast(short) res[0] == CONTROL_QUIT) {
+        return EDITOR_QUIT;
 
-    }
-
-    if(res[0] == 9) {
-      // tab
-      return EDITOR_CONTINUE;
-    }
-
-    if(res[0] == 127) {
-      //Backspace
-      return EDITOR_CONTINUE;
-    }
-
-    if(res[0] == 91) {
-      switch(res[1]) {
-      case 72: return HOME;
-      case 70: return END;
-      case 53: return PAGE_UP;
-      case 54: return PAGE_DOWN;
-      case 65: return ARROW_UP;
-      case 66: return ARROW_DOWN;
-      case 67: return ARROW_RIGHT;
-      case 68: return ARROW_LEFT;
-        //delete:
-      case 51:
-      default: return EDITOR_CONTINUE;
       }
-    }
+
+      if(res[0] == 9) {
+        // tab
+        return TAB;
+      }
+
+      if(res[0] == 127) {
+        //Backspace
+        return BACKSPACE;
+      }
+
+      if(res[0] == 10) {
+        return ENTER;
+      }
+
+      if(res[1] == 91) {
+        switch(res[2]) {
+        case 72: return HOME;
+        case 70: return END;
+        case 53: return PAGE_UP;
+        case 54: return PAGE_DOWN;
+        case 65: return ARROW_UP;
+        case 66: return ARROW_DOWN;
+        case 67: return ARROW_RIGHT;
+        case 68: return ARROW_LEFT;
+          //delete:
+        case 51: return DELETE;
+        default: return EDITOR_CONTINUE;
+        }
+      }
 
 
   } else if( c == '\n' || c == '\r') {
@@ -241,6 +256,17 @@ void moveCursor(int key) {
 void insertChar(char c) {
   editor.putChar(c, configuration.cy, configuration.cx);
   configuration.cx++;
+}
+
+void deleteChar(int direction) {
+  editor.deleteChar(configuration.cy, configuration.cx, direction);
+  // configuration.cx--;
+  moveCursor(ARROW_LEFT);
+  // configuration.cx += direction;
+}
+
+void doEnter() {
+  editor.divideLines(configuration.cy, configuration.cx);
 }
 
 void printchars(string str) {
@@ -411,5 +437,6 @@ int main(string[] args)
 
   clearScreen();
   endRawMode();
+  writeln("bye!");
   return 0;
 }

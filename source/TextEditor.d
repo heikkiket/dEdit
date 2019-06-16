@@ -85,4 +85,21 @@ class TextEditor {
 
     content[line] = content[line][0..col] ~ c ~ content[line][col..$];
   }
+
+  void deleteChar(int line, int col, int direction) {
+    if(direction != -1 && direction != 1) {
+      return;
+    }
+
+    if(col < 1) {
+      return;
+    }
+
+    content[line] = content[line][0..col+direction] ~ content[line][col..$];
+    // content[line].length = 1;
+  }
+
+  void divideLines(int line, int col) {
+    return;
+  }
 }
