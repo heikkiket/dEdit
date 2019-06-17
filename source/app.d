@@ -104,6 +104,8 @@ void initEditor() {
 short processKeyPress() {
   int c = readKeyPress();
 
+  mydebug(to!string(configuration.cx) ~ " " ~ to!string(configuration.cy));
+
   switch(c) {
   case EDITOR_QUIT:
     return EDITOR_QUIT;
@@ -124,8 +126,7 @@ short processKeyPress() {
     deleteChar(-1);
     break;
   case DELETE:
-    // deleteChar(1);
-    return EDITOR_CONTINUE;
+    deleteChar(1);
     break;
   case EDITOR_CONTINUE:
     return EDITOR_CONTINUE;
@@ -148,43 +149,54 @@ int readKeyPress(){
       int[3] res;
 
       // The fgetc function returns -1 if no result
-      res[0] = c;
+      res[0] = fgetc(stdin);
       res[1] = fgetc(stdin);
-      res[2] = fgetc(stdin);
       // Debug:
       // writefln("%d %d %d",  res[0], res[1], res[2]);
+      // writefln("%c %c %c",  cast(char) res[0],cast(char)  cast(char) res[1], cast(char) res[2]);
 
-      if(cast(short) res[0] == CONTROL_QUIT) {
+      if(cast(short) c == CONTROL_QUIT) {
         return EDITOR_QUIT;
 
       }
 
-      if(res[0] == 9) {
+      if(res[1] >= '0' && res[1] <= '9') {
+        res[2] = fgetc(stdin);
+
+        if(res[2] == '~') {
+          switch(res[1]) {
+          case 72: return HOME;
+          case 70: return END;
+          case 53: return PAGE_UP;
+          case 54: return PAGE_DOWN;
+          case 51: return DELETE;
+          default: return EDITOR_CONTINUE;
+          }
+        }
+      }
+
+      if(c == 9) {
         // tab
         return TAB;
       }
 
-      if(res[0] == 127) {
+      if(c == 127) {
         //Backspace
         return BACKSPACE;
       }
 
-      if(res[0] == 10) {
+      if(c == 10) {
         return ENTER;
       }
 
-      if(res[1] == 91) {
-        switch(res[2]) {
-        case 72: return HOME;
-        case 70: return END;
-        case 53: return PAGE_UP;
-        case 54: return PAGE_DOWN;
+      if(res[0] == 91) {
+        switch(res[1]) {
         case 65: return ARROW_UP;
         case 66: return ARROW_DOWN;
         case 67: return ARROW_RIGHT;
         case 68: return ARROW_LEFT;
-          //delete:
-        case 51: return DELETE;
+        case 72: return HOME;
+        case 70: return END;
         default: return EDITOR_CONTINUE;
         }
       }
@@ -261,12 +273,17 @@ void insertChar(char c) {
 void deleteChar(int direction) {
   editor.deleteChar(configuration.cy, configuration.cx, direction);
   // configuration.cx--;
-  moveCursor(ARROW_LEFT);
+  if(direction == -1) {
+    moveCursor(ARROW_LEFT);
+  } else if(direction == 1) {
+  }
   // configuration.cx += direction;
 }
 
 void doEnter() {
   editor.divideLines(configuration.cy, configuration.cx);
+  moveCursor(ARROW_DOWN);
+  moveCursor(HOME);
 }
 
 void printchars(string str) {

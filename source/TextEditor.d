@@ -95,11 +95,18 @@ class TextEditor {
       return;
     }
 
-    content[line] = content[line][0..col+direction] ~ content[line][col..$];
-    // content[line].length = 1;
+    if(direction == -1) {
+      content[line] = content[line][0..col-1] ~ content[line][col..$];
+    } else if(direction == 1) {
+      content[line] = content[line][0..col] ~ content[line][col+1..$];
+    }
   }
 
   void divideLines(int line, int col) {
+    char[] str = content[line];
+    content[line] = str[0..col];
+    // content = content[0..line] ~ str[col..$] ~ content[line+1..$];
+    content = content[0..line+1] ~ str[col..$] ~ content[line + 1..$];
     return;
   }
 }
