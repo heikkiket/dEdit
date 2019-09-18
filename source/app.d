@@ -146,6 +146,25 @@ int readKeyPress(){
 
 
   if(isControl(c)) {
+
+    if(cast(short) c == CONTROL_QUIT) {
+      return EDITOR_QUIT;
+
+    }
+
+    if(c == 9) {
+      // tab
+      return TAB;
+    }
+
+    if(c == 127) {
+      //Backspace
+      return BACKSPACE;
+    }
+
+    if(c == 10) {
+      return ENTER;
+    }
       int[3] res;
 
       // The fgetc function returns -1 if no result
@@ -155,10 +174,6 @@ int readKeyPress(){
       // writefln("%d %d %d",  res[0], res[1], res[2]);
       // writefln("%c %c %c",  cast(char) res[0],cast(char)  cast(char) res[1], cast(char) res[2]);
 
-      if(cast(short) c == CONTROL_QUIT) {
-        return EDITOR_QUIT;
-
-      }
 
       if(res[1] >= '0' && res[1] <= '9') {
         res[2] = fgetc(stdin);
@@ -175,19 +190,6 @@ int readKeyPress(){
         }
       }
 
-      if(c == 9) {
-        // tab
-        return TAB;
-      }
-
-      if(c == 127) {
-        //Backspace
-        return BACKSPACE;
-      }
-
-      if(c == 10) {
-        return ENTER;
-      }
 
       if(res[0] == 91) {
         switch(res[1]) {
