@@ -1,6 +1,8 @@
 # Dedit
 A simple text editor in D
 
+![dEdit editor open in terminal showing this same README file](Screenshot.png "dEdit editor")
+
 This is just a hobby/learning project about how text editors and terminal programs actually work.
 Whole program is actually just a re-implementation of Kilo editor by snaptoken: https://viewsourcecode.org/snaptoken/kilo/, which in turn is just a commented version of Antirez's Kilo editor: http://antirez.com/news/108
 
